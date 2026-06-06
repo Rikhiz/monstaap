@@ -1,0 +1,683 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- appV1.0 Rev 1.1 - Hotfix Sidebar & API Status -->
+<!DOCTYPE html>
+<html b:css='false' b:defaultwidgetversion='2' b:layoutsVersion='3' expr:dir='data:blog.languageDirection' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/2005/gml/b' xmlns:data='http://www.google.com/2005/gml/data' xmlns:expr='http://www.google.com/2005/gml/expr'>
+<head>
+  <meta content='width=device-width, initial-scale=1, maximum-scale=1' name='viewport'/>
+  <title><data:view.title.escaped/></title>
+  
+  <!-- JSZip Library via CDN untuk unzipping file .cbz di memori -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js' type='text/javascript'></script>
+
+  <b:skin><![CDATA[
+    /* CSS Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #0d0d0d;
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Splash Screen Loading */
+    #splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #050505;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    .neon-loading {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #00ff00;
+      text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 40px #00ff00;
+      animation: pulse 1.5s infinite alternate;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.7; text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; }
+      100% { opacity: 1; text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 40px #00ff00; }
+    }
+
+    /* Sticky Navigation Bar & Hamburger Menu (Homepage) */
+    header {
+      position: sticky;
+      top: 0;
+      background-color: #111111;
+      border-bottom: 1px solid #222222;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 1000;
+    }
+    .hamburger-menu {
+      color: #00ff00;
+      font-size: 1.8rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .hamburger-menu:active {
+      transform: scale(0.9);
+    }
+    .search-container {
+      flex: 1;
+      margin-left: 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    #search-bar {
+      width: 100%;
+      max-width: 300px;
+      padding: 8px 15px;
+      border-radius: 20px;
+      border: 1px solid #00ff00;
+      background-color: #000000;
+      color: #00ff00;
+      outline: none;
+      font-size: 0.9rem;
+      transition: box-shadow 0.3s;
+    }
+    #search-bar:focus {
+      box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+    }
+    #search-bar::placeholder {
+      color: #00ff00;
+      opacity: 0.5;
+    }
+
+    /* Sidebar Menu Kategori */
+    #sidebar-menu {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 280px;
+      height: 100vh;
+      background-color: #111111;
+      border-right: 2px solid #00ff00;
+      z-index: 3000;
+      transition: left 0.3s ease;
+      padding: 20px;
+      overflow-y: auto;
+      box-shadow: 5px 0 20px rgba(0, 0, 0, 0.8);
+    }
+    #sidebar-menu.active {
+      left: 0;
+    }
+    .close-sidebar {
+      color: #00ff00;
+      font-size: 2rem;
+      cursor: pointer;
+      text-align: right;
+      display: block;
+      margin-bottom: 15px;
+      line-height: 1;
+    }
+    .close-sidebar:hover {
+      text-shadow: 0 0 10px #00ff00;
+    }
+    #sidebar-menu h2 {
+      color: #00ff00;
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 10px;
+    }
+    .category-item {
+      padding: 12px 5px;
+      border-bottom: 1px solid #222;
+      color: #e0e0e0;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: color 0.2s, padding-left 0.2s;
+    }
+    .category-item:hover {
+      color: #00ff00;
+      padding-left: 10px;
+    }
+    #repo-status {
+      font-size: 0.8rem;
+      margin-top: 25px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #1a1a1a;
+      word-wrap: break-word;
+    }
+    .status-ok { color: #00ff00; border-left: 3px solid #00ff00; }
+    .status-error { color: #ff5555; border-left: 3px solid #ff5555; }
+
+    /* Homepage View Grid */
+    .container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    #comic-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px;
+    }
+
+    /* Comic Card Style */
+    .card {
+      background-color: #1a1a1a;
+      border: 2px solid #2a2a2a;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      padding-bottom: 15px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: #00ff00;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+    }
+    .card-cover {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      border-bottom: 2px solid #2a2a2a;
+      transition: border-color 0.3s ease;
+    }
+    .card:hover .card-cover {
+      border-bottom-color: #00ff00;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: center;
+      margin: 12px 10px 8px;
+      color: #e0e0e0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.2;
+    }
+    .read-badge {
+      background-color: #00ff00;
+      color: #000000;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 5px 12px;
+      border-radius: 15px;
+      text-transform: uppercase;
+      margin-top: auto;
+    }
+    .no-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px;
+      color: #777;
+    }
+
+    /* Advanced Reader Mode View Styles */
+    #reader-view {
+      display: none;
+      background-color: #000000;
+      min-height: 100vh;
+      width: 100%;
+    }
+    #reader-header {
+      position: sticky;
+      top: 0;
+      background-color: rgba(17, 17, 17, 0.95);
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #00ff00;
+      z-index: 2010;
+      backdrop-filter: blur(5px);
+    }
+    .back-btn {
+      color: #00ff00;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 20px;
+      display: flex;
+      align-items: center;
+      transition: text-shadow 0.3s;
+    }
+    .back-btn:hover {
+      text-shadow: 0 0 10px #00ff00;
+    }
+    #reader-title {
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #reader-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      padding-bottom: 50px;
+      overflow: hidden;
+    }
+    .reader-page {
+      width: 100%;
+      max-width: 800px;
+      display: block;
+      margin: 0;
+      user-select: none;
+      -webkit-user-drag: none;
+      transition: transform 0.2s ease-out;
+    }
+    .reader-page.zoomed {
+      cursor: grab;
+    }
+    .reader-page.zoomed:active {
+      cursor: grabbing;
+    }
+
+    /* Cross-Reading Footer Styles */
+    #reader-footer {
+      background-color: #111111;
+      padding: 30px 20px;
+      border-top: 2px solid #222222;
+    }
+    #reader-footer h3 {
+      color: #00ff00;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+      text-align: center;
+    }
+    .horizontal-scroll {
+      display: flex;
+      overflow-x: auto;
+      gap: 15px;
+      padding-bottom: 15px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .horizontal-scroll::-webkit-scrollbar {
+      height: 8px;
+    }
+    .horizontal-scroll::-webkit-scrollbar-track {
+      background: #000;
+    }
+    .horizontal-scroll::-webkit-scrollbar-thumb {
+      background: #00ff00;
+      border-radius: 4px;
+    }
+  ]]></b:skin>
+</head>
+<body>
+  
+  <b:section class='main' id='main' showaddelement='no'>
+    <b:widget id='Blog1' locked='true' title='Blog Posts' type='Blog' version='2'>
+      <b:includable id='main'>
+        <!-- Override Blogger Default Output for SPA Shell -->
+      </b:includable>
+    </b:widget>
+  </b:section>
+
+  <!-- Splash Screen Loading -->
+  <div id='splash-screen'>
+    <div class='neon-loading'>MonstaComic Loading...</div>
+  </div>
+
+  <!-- Sidebar Menu (Kategori Dinamis) -->
+  <div id='sidebar-menu'>
+    <span class='close-sidebar' id='close-sidebar'>&#215;</span>
+    <h2>Kategori Komik</h2>
+    <div id='category-list'>
+      <div style='color: #888; font-size: 0.9rem;'>Memuat dari GitHub...</div>
+    </div>
+    <div id='repo-status'>Menghubungkan ke Repo...</div>
+  </div>
+
+  <!-- SPA Container -->
+  <div id='app-container'>
+
+    <!-- HOMEPAGE VIEW -->
+    <div id='homepage-view'>
+      <!-- Hamburger Menu & Sticky Navigation Bar -->
+      <header>
+        <div class='hamburger-menu' id='btn-hamburger'>&#9776;</div>
+        <div class='search-container'>
+          <input id='search-bar' placeholder='Cari judul komik...' type='text'/>
+        </div>
+      </header>
+
+      <!-- Homepage View Grid -->
+      <main class='container'>
+        <div id='comic-grid'>
+          <!-- Kartu komik akan di-inject via JS -->
+        </div>
+      </main>
+    </div>
+
+    <!-- ADVANCED READER MODE VIEW -->
+    <div id='reader-view'>
+      <div id='reader-header'>
+        <div class='back-btn' id='btn-back'>&#8592; Kembali</div>
+        <div id='reader-title'>Judul Komik</div>
+      </div>
+      
+      <div id='reader-content'></div>
+      
+      <div id='reader-footer'>
+        <h3>Rekomendasi Lainnya</h3>
+        <div class='horizontal-scroll' id='recommendation-grid'></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type='text/javascript'>
+    //<![CDATA[
+    /* Global Configuration */
+    const GH_USER = "Rikhiz";
+    const GH_REPO = "monstaap";
+
+    // Data dummy untuk Homepage View
+    let comicData = [
+      { id: "manga_001", title: "A Dragonslayer’s Peerless Regression", cover_url: "https://via.placeholder.com/300x400/111111/00ff00?text=Dragonslayer" },
+      { id: "manga_002", title: "Solo Leveling", cover_url: "https://via.placeholder.com/300x400/111111/00ff00?text=Solo+Leveling" },
+      { id: "manga_003", title: "Omniscient Reader's Viewpoint", cover_url: "https://via.placeholder.com/300x400/111111/00ff00?text=ORV" },
+      { id: "manga_004", title: "The Beginning After The End", cover_url: "https://via.placeholder.com/300x400/111111/00ff00?text=TBATE" }
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const splashScreen = document.getElementById('splash-screen');
+      const comicGrid = document.getElementById('comic-grid');
+      const searchBar = document.getElementById('search-bar');
+      
+      const homepageView = document.getElementById('homepage-view');
+      const readerView = document.getElementById('reader-view');
+      const readerContent = document.getElementById('reader-content');
+      const recommendationGrid = document.getElementById('recommendation-grid');
+
+      // Sidebar Elements
+      const btnHamburger = document.getElementById('btn-hamburger');
+      const sidebarMenu = document.getElementById('sidebar-menu');
+      const closeSidebar = document.getElementById('close-sidebar');
+      const categoryList = document.getElementById('category-list');
+      const repoStatus = document.getElementById('repo-status');
+
+      // --- LOGIC SIDEBAR MENU ---
+      btnHamburger.addEventListener('click', () => {
+        sidebarMenu.classList.add('active');
+      });
+      closeSidebar.addEventListener('click', () => {
+        sidebarMenu.classList.remove('active');
+      });
+
+      // --- RENDER GRID HOMEPAGE ---
+      const renderGrid = (data) => {
+        comicGrid.innerHTML = '';
+        if (data.length === 0) {
+          comicGrid.innerHTML = '<div class="no-results">Komik tidak ditemukan.</div>';
+          return;
+        }
+        data.forEach(comic => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <img class="card-cover" src="${comic.cover_url}" alt="Cover ${comic.title}" loading="lazy"/>
+            <h3 class="card-title">${comic.title}</h3>
+            <span class="read-badge">Baca Online</span>
+          `;
+          card.addEventListener('click', () => openReader(comic));
+          comicGrid.appendChild(card);
+        });
+      };
+
+      // --- CEK KONEKSI GITHUB & RENDER KATEGORI ---
+      const fetchRepoContents = async () => {
+        repoStatus.innerHTML = 'Mengecek repositori...';
+        repoStatus.className = '';
+        
+        // Peringatan jika belum diganti
+        if (GH_USER === "GANTI_USER_KAMU" || GH_REPO === "GANTI_REPO_KAMU") {
+          repoStatus.innerHTML = '&#10007; Status: Anda belum mengubah variabel GH_USER atau GH_REPO di kode.';
+          repoStatus.className = 'status-error';
+          categoryList.innerHTML = '<div style="color:#ff5555; font-size:0.9rem;">Variabel belum diset.</div>';
+          return;
+        }
+
+        try {
+          const apiUrl = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/`;
+          const response = await fetch(apiUrl);
+          if (response.ok) {
+            const data = await response.json();
+            const directories = data.filter(item => item.type === 'dir');
+            
+            repoStatus.innerHTML = `&#10003; Terhubung ke GitHub:<br/><b>${GH_USER}/${GH_REPO}</b>`;
+            repoStatus.className = 'status-ok';
+            
+            categoryList.innerHTML = '';
+            if (directories.length > 0) {
+              directories.forEach(dir => {
+                const div = document.createElement('div');
+                div.className = 'category-item';
+                div.textContent = `📁 ${dir.name}`;
+                div.addEventListener('click', () => {
+                  alert('Membuka kategori: ' + dir.name);
+                  sidebarMenu.classList.remove('active');
+                });
+                categoryList.appendChild(div);
+              });
+            } else {
+              categoryList.innerHTML = '<div style="color:#aaa; font-size:0.9rem;">Tidak ada folder kategori di repositori ini.</div>';
+            }
+          } else {
+            repoStatus.innerHTML = `&#10007; Gagal (HTTP ${response.status}):<br/>Repo tidak ditemukan. Pastikan repo bersifat Public.`;
+            repoStatus.className = 'status-error';
+            categoryList.innerHTML = '<div style="color:#ff5555; font-size:0.9rem;">Gagal memuat kategori.</div>';
+          }
+        } catch (error) {
+          console.warn("API GitHub Fetch Info:", error);
+          repoStatus.innerHTML = '&#10007; Gagal terhubung: Koneksi terputus atau batasan limit API GitHub.';
+          repoStatus.className = 'status-error';
+          categoryList.innerHTML = '<div style="color:#ff5555; font-size:0.9rem;">API terputus.</div>';
+        }
+      };
+
+      const initApp = async () => {
+        fetchRepoContents();
+        setTimeout(() => {
+          renderGrid(comicData);
+          splashScreen.style.opacity = '0';
+          setTimeout(() => { splashScreen.style.visibility = 'hidden'; }, 500); 
+        }, 1500); 
+      };
+
+      searchBar.addEventListener('input', (e) => {
+        const keyword = e.target.value.toLowerCase();
+        const filteredComics = comicData.filter(comic => 
+          comic.title.toLowerCase().includes(keyword)
+        );
+        renderGrid(filteredComics);
+      });
+
+      // --- LOGIC READER MODE ---
+      const openReader = (comic) => {
+        homepageView.style.display = 'none';
+        readerView.style.display = 'block';
+        document.getElementById('reader-title').textContent = comic.title;
+        window.scrollTo(0, 0); 
+        renderRecommendations(comic.id);
+        loadCBZFile(comic.title);
+      };
+
+      document.getElementById('btn-back').addEventListener('click', () => {
+        readerView.style.display = 'none';
+        homepageView.style.display = 'block';
+        readerContent.innerHTML = ''; 
+      });
+
+      const renderRecommendations = (excludeId) => {
+        recommendationGrid.innerHTML = '';
+        const filtered = comicData.filter(c => c.id !== excludeId);
+        const shuffled = filtered.sort(() => 0.5 - Math.random()).slice(0, 6);
+        
+        shuffled.forEach(comic => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.style.minWidth = '140px';
+          card.style.paddingBottom = '10px';
+          card.innerHTML = `
+            <img class="card-cover" src="${comic.cover_url}" alt="Cover" style="height:190px;"/>
+            <h3 class="card-title" style="font-size:0.85rem; margin-top:8px;">${comic.title}</h3>
+          `;
+          card.addEventListener('click', () => openReader(comic));
+          recommendationGrid.appendChild(card);
+        });
+      };
+
+      const loadCBZFile = async (title) => {
+        readerContent.innerHTML = `
+          <div style="padding: 100px 20px; text-align: center; width: 100%;">
+            <div class="neon-loading">Mengekstrak Chapter...</div>
+            <p style="color: #00ff00; margin-top: 15px; opacity: 0.7;">Sedang mengunduh file .cbz dari GitHub</p>
+          </div>
+        `;
+
+        try {
+          const fileUrl = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/assets/${encodeURIComponent(title)}.cbz`;
+          const response = await fetch(fileUrl);
+          if (!response.ok) throw new Error("HTTP-Error: " + response.status);
+
+          const blob = await response.blob();
+          const zip = new JSZip();
+          const contents = await zip.loadAsync(blob);
+          
+          readerContent.innerHTML = '';
+          const filenames = Object.keys(contents.files).sort();
+          let imageCount = 0;
+
+          for (let filename of filenames) {
+            const file = contents.files[filename];
+            if (!file.dir && filename.match(/\.(png|jpe?g|webp|gif)$/i)) {
+              imageCount++;
+              const base64Data = await file.async("base64");
+              const img = document.createElement('img');
+              const ext = filename.split('.').pop().toLowerCase();
+              const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+              
+              img.src = `data:${mimeType};base64,${base64Data}`;
+              img.className = 'reader-page';
+              img.loading = 'lazy'; 
+
+              img.onerror = function() {
+                this.onerror = null; 
+                this.src = "https://via.placeholder.com/800x1000/111111/ff0000?text=Gambar+Rusak";
+                this.style.border = "2px dashed #ff0000";
+              };
+              attachZoomAndPan(img);
+              readerContent.appendChild(img);
+            }
+          }
+          if (imageCount === 0) throw new Error("File CBZ kosong.");
+        } catch (error) {
+          readerContent.innerHTML = `
+            <div style="width: 100%; max-width: 800px; margin: 40px auto; padding: 40px 20px; text-align: center; border: 2px dashed #00ff00; border-radius: 15px; color: #00ff00; background-color: #1a1a1a;">
+              <h2 style="margin-bottom: 10px; text-transform: uppercase;">Ups! Gagal Memuat Chapter</h2>
+              <p style="margin-bottom: 25px; color: #cccccc;">Sistem gagal mendownload atau mengekstrak file <b>.cbz</b>.</p>
+              <img src="https://via.placeholder.com/600x400/000000/00ff00?text=404+Chapter+Not+Found" style="width: 100%; max-width: 400px; border-radius: 10px;"/>
+            </div>
+          `;
+        }
+      };
+
+      const attachZoomAndPan = (img) => {
+        let isZoomed = false;
+        let startX, startY, currentX = 0, currentY = 0;
+
+        const toggleZoom = (offsetX, offsetY, width, height) => {
+          if (!isZoomed) {
+            img.classList.add('zoomed');
+            isZoomed = true;
+            const originX = (offsetX / width) * 100;
+            const originY = (offsetY / height) * 100;
+            img.style.transformOrigin = `${originX}% ${originY}%`;
+            img.style.transform = 'scale(2)';
+          } else {
+            resetZoom();
+          }
+        };
+
+        const resetZoom = () => {
+          img.classList.remove('zoomed');
+          isZoomed = false;
+          img.style.transform = '';
+          img.style.transformOrigin = '';
+          currentX = 0; currentY = 0;
+        };
+
+        img.addEventListener('dblclick', (e) => toggleZoom(e.offsetX, e.offsetY, img.offsetWidth, img.offsetHeight));
+
+        let isDragging = false;
+        img.addEventListener('mousedown', (e) => {
+          if (!isZoomed) return;
+          isDragging = true;
+          startX = e.clientX - currentX;
+          startY = e.clientY - currentY;
+          e.preventDefault();
+        });
+        window.addEventListener('mousemove', (e) => {
+          if (!isDragging || !isZoomed) return;
+          currentX = e.clientX - startX;
+          currentY = e.clientY - startY;
+          img.style.transform = `scale(2) translate(${currentX/2}px, ${currentY/2}px)`;
+        });
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isZoomed) resetZoom(); });
+
+        let lastTap = 0;
+        img.addEventListener('touchend', (e) => {
+          const currentTime = new Date().getTime();
+          const tapLength = currentTime - lastTap;
+          if (tapLength < 500 && tapLength > 0) {
+            e.preventDefault();
+            const rect = img.getBoundingClientRect();
+            const touch = e.changedTouches[0];
+            toggleZoom(touch.clientX - rect.left, touch.clientY - rect.top, rect.width, rect.height);
+          }
+          lastTap = currentTime;
+        });
+
+        img.addEventListener('touchstart', (e) => {
+          if (!isZoomed) return;
+          isDragging = true;
+          startX = e.touches[0].clientX - currentX;
+          startY = e.touches[0].clientY - currentY;
+        });
+        img.addEventListener('touchmove', (e) => {
+          if (!isDragging || !isZoomed) return;
+          e.preventDefault(); 
+          currentX = e.touches[0].clientX - startX;
+          currentY = e.touches[0].clientY - startY;
+          img.style.transform = `scale(2) translate(${currentX/2}px, ${currentY/2}px)`;
+        }, {passive: false});
+        img.addEventListener('touchend', () => { isDragging = false; });
+      };
+
+      initApp();
+    });
+    //]]>
+  </script>
+</body>
+</html>
