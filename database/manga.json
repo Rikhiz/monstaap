@@ -1,0 +1,39 @@
+{
+  "manga_id": "manga_001",
+  "title": "A Dragonslayer’s Peerless Regression",
+  "alternative_title": "The Peerless Dragonslayer's Return",
+  "status": "Ongoing",
+  "author": "Yoo Sung",
+  "artist": "Kuro",
+  "genres": [
+    "Action",
+    "Fantasy",
+    "Adventure",
+    "Regression"
+  ],
+  "type": "Manhwa",
+  "release_year": 2023,
+  "rating": 4.8,
+  "synopsis": "After being betrayed and killed, the greatest dragonslayer regressions to the past to rewrite his destiny and save humanity from the approaching doom.",
+  "cover_url": "https://example.com/covers/dragonslayer-regression.jpg",
+  "chapters": [
+    {
+      "chapter_number": 1,
+      "chapter_title": "The End and The Beginning",
+      "image_links": [
+        "https://example.com/raw/dragonslayer/ch1/page1.jpg",
+        "https://example.com/raw/dragonslayer/ch1/page2.jpg",
+        "https://example.com/raw/dragonslayer/ch1/page3.jpg"
+      ]
+    },
+    {
+      "chapter_number": 2,
+      "chapter_title": "A Second Chance",
+      "image_links": [
+        "https://example.com/raw/dragonslayer/ch2/page1.jpg",
+        "https://example.com/raw/dragonslayer/ch2/page2.jpg",
+        "https://example.com/raw/dragonslayer/ch2/page3.jpg"
+      ]
+    }
+  ]
+}
