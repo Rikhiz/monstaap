@@ -481,6 +481,18 @@
             } else {
               categoryList.innerHTML = '<div style="color:#aaa; font-size:0.9rem;">Tidak ada folder kategori di repositori ini.</div>';
             }
+          } else if (response.status === 403) {
+            // Handle GitHub Rate Limit (60 req/hour for unauthenticated)
+            repoStatus.innerHTML = `&#9888; API Limit (HTTP 403):<br/>Terlalu banyak refresh. Kategori dinamis dijeda sementara.`;
+            repoStatus.className = 'status-error';
+            repoStatus.style.borderLeftColor = '#ffcc00';
+            repoStatus.style.color = '#ffcc00';
+            categoryList.innerHTML = `
+              <div class="category-item" onclick="alert('Kategori sementara')">📁 Action</div>
+              <div class="category-item" onclick="alert('Kategori sementara')">📁 Fantasy</div>
+              <div class="category-item" onclick="alert('Kategori sementara')">📁 Regression</div>
+              <div style="color:#888; font-size:0.8rem; margin-top:10px; font-style:italic;">(Ini kategori dummy sementara fitur live limit)</div>
+            `;
           } else {
             repoStatus.innerHTML = `&#10007; Gagal (HTTP ${response.status}):<br/>Repo tidak ditemukan. Pastikan repo bersifat Public.`;
             repoStatus.className = 'status-error';
