@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- appV1.0 Rev 1.1 - Hotfix Sidebar & API Status -->
+<!-- appV2.1 - Two-Step Fetch & Dynamic Reader -->
 <!DOCTYPE html>
 <html b:css='false' b:defaultwidgetversion='2' b:layoutsVersion='3' expr:dir='data:blog.languageDirection' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/2005/gml/b' xmlns:data='http://www.google.com/2005/gml/data' xmlns:expr='http://www.google.com/2005/gml/expr'>
 <head>
@@ -10,6 +10,27 @@
   <script src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js' type='text/javascript'></script>
 
   <b:skin><![CDATA[
+    /* @import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+    /* Design System & CSS Variables */
+    :root {
+      --bg-dark: #0a0b10;
+      --bg-card: #141722;
+      --bg-header: rgba(10, 11, 16, 0.85);
+      --border-color: #232731;
+      --neon-green: #00ff88;
+      --neon-cyan: #00d4ff;
+      --text-primary: #ffffff;
+      --text-secondary: #8f9cae;
+      --glow-green: 0 0 15px rgba(0, 255, 136, 0.45);
+      --glow-cyan: 0 0 15px rgba(0, 212, 255, 0.45);
+      --glass-bg: rgba(20, 23, 34, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'Outfit', sans-serif;
+    }
+
     /* CSS Reset */
     * {
       box-sizing: border-box;
@@ -17,10 +38,28 @@
       padding: 0;
     }
     body {
-      background-color: #0d0d0d;
-      color: #ffffff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: var(--font-body);
       overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 5px;
+      border: 2px solid var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--neon-cyan);
     }
 
     /* Splash Screen Loading */
@@ -30,240 +69,682 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: #050505;
+      background-color: var(--bg-dark);
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       z-index: 9999;
-      transition: opacity 0.5s ease, visibility 0.5s ease;
+      transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .neon-loading {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #00ff00;
-      text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 40px #00ff00;
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+      letter-spacing: 1.5px;
+      margin-bottom: 25px;
       animation: pulse 1.5s infinite alternate;
     }
+    .spinner-container {
+      position: relative;
+      width: 70px;
+      height: 70px;
+      margin-top: 10px;
+    }
+    .spinner-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 4px solid transparent;
+      border-top-color: var(--neon-green);
+      border-bottom-color: var(--neon-cyan);
+      border-radius: 50%;
+      animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
     @keyframes pulse {
-      0% { opacity: 0.7; text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; }
-      100% { opacity: 1; text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 40px #00ff00; }
+      0% { opacity: 0.7; transform: scale(0.98); }
+      100% { opacity: 1; transform: scale(1.02); }
     }
 
-    /* Sticky Navigation Bar & Hamburger Menu (Homepage) */
+    /* Sticky Navigation Bar & Header */
     header {
       position: sticky;
       top: 0;
-      background-color: #111111;
-      border-bottom: 1px solid #222222;
-      padding: 15px 20px;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--glass-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 15px 30px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       z-index: 1000;
+      transition: all 0.3s ease;
+    }
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
     }
     .hamburger-menu {
-      color: #00ff00;
+      color: var(--neon-green);
       font-size: 1.8rem;
       cursor: pointer;
       user-select: none;
+      transition: all 0.25s ease;
+    }
+    .hamburger-menu:hover {
+      text-shadow: var(--glow-green);
+      transform: scale(1.1);
     }
     .hamburger-menu:active {
       transform: scale(0.9);
     }
-    .search-container {
-      flex: 1;
-      margin-left: 20px;
-      display: flex;
-      justify-content: flex-end;
+    .logo {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+      color: var(--text-primary);
+      text-decoration: none;
     }
-    #search-bar {
-      width: 100%;
-      max-width: 300px;
-      padding: 8px 15px;
-      border-radius: 20px;
-      border: 1px solid #00ff00;
-      background-color: #000000;
-      color: #00ff00;
-      outline: none;
-      font-size: 0.9rem;
-      transition: box-shadow 0.3s;
-    }
-    #search-bar:focus {
-      box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
-    }
-    #search-bar::placeholder {
-      color: #00ff00;
-      opacity: 0.5;
+    .logo span {
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    /* Sidebar Menu Kategori */
+    /* Search Input Wrapper */
+    .search-wrapper {
+      position: relative;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      pointer-events: none;
+    }
+    #search-bar {
+      width: 220px;
+      padding: 8px 16px 8px 38px;
+      border-radius: 30px;
+      border: 1px solid var(--border-color);
+      background-color: rgba(0, 0, 0, 0.35);
+      color: var(--text-primary);
+      outline: none;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #search-bar:focus {
+      width: 280px;
+      border-color: var(--neon-green);
+      box-shadow: var(--glow-green);
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+    #search-bar::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+
+    /* Sidebar Menu Kategori (Glassmorphism) */
     #sidebar-menu {
       position: fixed;
       top: 0;
-      left: -280px;
-      width: 280px;
+      left: -300px;
+      width: 300px;
       height: 100vh;
-      background-color: #111111;
-      border-right: 2px solid #00ff00;
+      background: rgba(10, 11, 16, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
       z-index: 3000;
-      transition: left 0.3s ease;
-      padding: 20px;
+      transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 30px;
       overflow-y: auto;
-      box-shadow: 5px 0 20px rgba(0, 0, 0, 0.8);
+      box-shadow: 10px 0 30px rgba(0, 0, 0, 0.7);
     }
     #sidebar-menu.active {
       left: 0;
     }
     .close-sidebar {
-      color: #00ff00;
-      font-size: 2rem;
+      color: var(--neon-green);
+      font-size: 2.2rem;
       cursor: pointer;
       text-align: right;
       display: block;
-      margin-bottom: 15px;
+      margin-bottom: 25px;
       line-height: 1;
+      transition: all 0.25s ease;
     }
     .close-sidebar:hover {
-      text-shadow: 0 0 10px #00ff00;
+      text-shadow: var(--glow-green);
+      transform: rotate(90deg);
     }
     #sidebar-menu h2 {
-      color: #00ff00;
-      font-size: 1.2rem;
-      margin-bottom: 15px;
-      border-bottom: 1px solid #333;
-      padding-bottom: 10px;
+      font-family: var(--font-display);
+      color: var(--text-primary);
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      letter-spacing: 0.5px;
     }
     .category-item {
-      padding: 12px 5px;
-      border-bottom: 1px solid #222;
-      color: #e0e0e0;
+      padding: 12px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      color: var(--text-secondary);
       cursor: pointer;
       font-size: 0.95rem;
-      transition: color 0.2s, padding-left 0.2s;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 6px;
     }
     .category-item:hover {
-      color: #00ff00;
-      padding-left: 10px;
+      color: var(--neon-green);
+      background-color: rgba(255, 255, 255, 0.03);
+      padding-left: 15px;
     }
     #repo-status {
       font-size: 0.8rem;
-      margin-top: 25px;
-      padding: 12px;
-      border-radius: 8px;
-      background: #1a1a1a;
+      margin-top: 35px;
+      padding: 15px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
       word-wrap: break-word;
+      line-height: 1.4;
     }
-    .status-ok { color: #00ff00; border-left: 3px solid #00ff00; }
-    .status-error { color: #ff5555; border-left: 3px solid #ff5555; }
+    .status-ok { color: var(--neon-green); border-left: 3px solid var(--neon-green) !important; }
+    .status-error { color: #ff557f; border-left: 3px solid #ff557f; }
+
+    /* Homepage Tabs Navigation */
+    .tabs-container {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 5px 0 20px;
+      margin-bottom: 15px;
+      scrollbar-width: none;
+    }
+    .tabs-container::-webkit-scrollbar {
+      display: none;
+    }
+    .tab-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .tab-btn:hover {
+      color: var(--text-primary);
+      border-color: var(--neon-cyan);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 212, 255, 0.15));
+      border-color: var(--neon-green);
+      color: var(--neon-green);
+      text-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
+      box-shadow: inset 0 0 8px rgba(0, 255, 136, 0.08);
+    }
 
     /* Homepage View Grid */
     .container {
-      padding: 20px;
+      padding: 30px;
       max-width: 1200px;
       margin: 0 auto;
     }
     #comic-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 25px;
     }
 
-    /* Comic Card Style */
+    /* Manga Card Styling (Premium) */
     .card {
-      background-color: #1a1a1a;
-      border: 2px solid #2a2a2a;
-      border-radius: 10px;
+      position: relative;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-      padding-bottom: 15px;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     }
     .card:hover {
-      transform: translateY(-5px);
-      border-color: #00ff00;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+      transform: translateY(-8px);
+      border-color: var(--neon-green);
+      box-shadow: var(--glow-green), 0 12px 28px rgba(0, 0, 0, 0.6);
+    }
+    .card-cover-container {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
     }
     .card-cover {
       width: 100%;
-      aspect-ratio: 3 / 4;
+      height: 100%;
       object-fit: cover;
-      border-bottom: 2px solid #2a2a2a;
-      transition: border-color 0.3s ease;
+      transition: transform 0.5s ease;
     }
     .card:hover .card-cover {
-      border-bottom-color: #00ff00;
+      transform: scale(1.06);
+    }
+    .card-badges {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .badge-type {
+      background: rgba(10, 11, 16, 0.8);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0, 212, 255, 0.4);
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .badge-rating {
+      background: rgba(10, 11, 16, 0.8);
+      color: #ffaa00;
+      border: 1px solid rgba(255, 170, 0, 0.4);
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .card-info {
+      padding: 14px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.45));
     }
     .card-title {
-      font-size: 1rem;
+      font-family: var(--font-display);
+      font-size: 0.95rem;
       font-weight: 600;
-      text-align: center;
-      margin: 12px 10px 8px;
-      color: #e0e0e0;
+      line-height: 1.35;
+      color: var(--text-primary);
+      margin-bottom: 12px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      line-height: 1.2;
+      height: 38px;
+    }
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+    .card-year {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
     }
     .read-badge {
-      background-color: #00ff00;
-      color: #000000;
-      font-size: 0.75rem;
-      font-weight: bold;
-      padding: 5px 12px;
-      border-radius: 15px;
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+      color: #050505;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
       text-transform: uppercase;
-      margin-top: auto;
+      box-shadow: 0 2px 8px rgba(0, 255, 136, 0.25);
+      transition: all 0.25s ease;
+    }
+    .card:hover .read-badge {
+      transform: scale(1.05);
+      box-shadow: var(--glow-cyan);
     }
     .no-results {
       grid-column: 1 / -1;
       text-align: center;
-      padding: 40px;
-      color: #777;
+      padding: 60px;
+      color: var(--text-secondary);
+      font-size: 1.1rem;
     }
 
-    /* Advanced Reader Mode View Styles */
+    /* --- DETAIL VIEW STYLE --- */
+    #detail-view {
+      background-color: var(--bg-dark);
+      min-height: 100vh;
+      width: 100%;
+      padding-bottom: 60px;
+    }
+    .detail-banner-container {
+      position: relative;
+      width: 100%;
+      min-height: 420px;
+      padding: 30px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .detail-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      filter: blur(25px) brightness(0.3);
+      transform: scale(1.15);
+      z-index: 1;
+    }
+    .detail-banner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(10, 11, 16, 0.4) 0%, var(--bg-dark) 100%);
+      z-index: 2;
+    }
+    .detail-header {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+    }
+    .back-btn {
+      color: var(--neon-green);
+      font-size: 1.1rem;
+      font-family: var(--font-display);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+    }
+    .back-btn:hover {
+      text-shadow: var(--glow-green);
+      transform: translateX(-3px);
+    }
+    .fav-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      padding: 8px 18px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.25s ease;
+    }
+    .fav-btn:hover {
+      border-color: #ff3860;
+      color: #ff3860;
+      background: rgba(255, 56, 96, 0.05);
+      box-shadow: 0 0 15px rgba(255, 56, 96, 0.35);
+    }
+    .fav-btn.active {
+      background: #ff3860;
+      border-color: #ff3860;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(255, 56, 96, 0.5);
+    }
+    .detail-hero-content {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      gap: 35px;
+      max-width: 1000px;
+      margin: 40px auto 0;
+      align-items: flex-end;
+      width: 100%;
+    }
+    .detail-cover {
+      width: 220px;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      border-radius: 16px;
+      border: 2px solid var(--border-color);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8);
+    }
+    .detail-info {
+      flex-grow: 1;
+      padding-bottom: 10px;
+    }
+    .detail-type-badge {
+      background: var(--neon-cyan);
+      color: #050505;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+      display: inline-block;
+      margin-bottom: 14px;
+    }
+    .detail-title {
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      line-height: 1.25;
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    }
+    .detail-alt-title {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+    }
+    .detail-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      max-width: 550px;
+      margin-bottom: 20px;
+      background: rgba(10, 11, 16, 0.5);
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .detail-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .meta-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .meta-value {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .text-gold { color: #ffaa00; }
+    .text-green { color: var(--neon-green); }
+    .detail-genres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .genre-pill {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      padding: 5px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .genre-pill:hover {
+      border-color: var(--neon-cyan);
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+    }
+    .detail-body-container {
+      max-width: 1000px;
+      margin: 40px auto 0;
+      padding: 0 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 35px;
+    }
+    .detail-section h2 {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: #ffffff;
+      border-left: 4px solid var(--neon-green);
+      padding-left: 12px;
+      letter-spacing: 0.5px;
+    }
+    .detail-synopsis {
+      line-height: 1.7;
+      color: var(--text-secondary);
+      font-size: 0.98rem;
+      text-align: justify;
+    }
+    .action-section {
+      display: flex;
+      justify-content: flex-start;
+      margin-top: 15px;
+    }
+    .btn-primary-neon {
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+      border: none;
+      color: #050505;
+      padding: 15px 45px;
+      border-radius: 30px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0, 255, 136, 0.35);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 100%;
+      max-width: 320px;
+      letter-spacing: 0.5px;
+    }
+    .btn-primary-neon:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(0, 255, 136, 0.55);
+    }
+    .btn-primary-neon:active {
+      transform: translateY(-1px);
+    }
+    .icon-play {
+      width: 22px;
+      height: 22px;
+    }
+    @media (max-width: 768px) {
+      .detail-hero-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 25px;
+      }
+      .detail-cover {
+        width: 160px;
+      }
+      .detail-meta-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 100%;
+      }
+      .detail-genres {
+        justify-content: center;
+      }
+      .action-section {
+        justify-content: center;
+      }
+      .btn-primary-neon {
+        max-width: 100%;
+      }
+    }
+
+    /* --- READER VIEW & CONFIGURATION --- */
     #reader-view {
       display: none;
       background-color: #000000;
       min-height: 100vh;
       width: 100%;
+      transition: background-color 0.3s ease;
     }
     #reader-header {
       position: sticky;
       top: 0;
-      background-color: rgba(17, 17, 17, 0.95);
-      padding: 15px 20px;
+      background-color: rgba(10, 11, 16, 0.95);
+      padding: 15px 30px;
       display: flex;
       align-items: center;
-      border-bottom: 1px solid #00ff00;
+      border-bottom: 1px solid var(--border-color);
       z-index: 2010;
-      backdrop-filter: blur(5px);
-    }
-    .back-btn {
-      color: #00ff00;
-      font-size: 1.2rem;
-      font-weight: bold;
-      cursor: pointer;
-      margin-right: 20px;
-      display: flex;
-      align-items: center;
-      transition: text-shadow 0.3s;
-    }
-    .back-btn:hover {
-      text-shadow: 0 0 10px #00ff00;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
     #reader-title {
       color: #ffffff;
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-left: 10px;
+      font-family: var(--font-display);
     }
     #reader-content {
       display: flex;
@@ -273,15 +754,20 @@
       padding-bottom: 50px;
       overflow: hidden;
     }
+    
+    /* Reader Width Configuration Classes */
     .reader-page {
-      width: 100%;
-      max-width: 800px;
       display: block;
       margin: 0;
       user-select: none;
       -webkit-user-drag: none;
-      transition: transform 0.2s ease-out;
+      transition: transform 0.2s ease-out, max-width 0.3s ease;
+      width: 100%;
     }
+    .width-fit { max-width: 800px; }
+    .width-medium { max-width: 600px; }
+    .width-full { max-width: 100%; }
+
     .reader-page.zoomed {
       cursor: grab;
     }
@@ -289,23 +775,208 @@
       cursor: grabbing;
     }
 
+    /* Scroll Progress Indicator */
+    #scroll-progress-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      z-index: 2060;
+    }
+    #scroll-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan));
+      box-shadow: var(--glow-green);
+      transition: width 0.1s ease;
+    }
+
+    /* Floating Reader Settings */
+    .floating-settings-btn {
+      position: fixed;
+      bottom: 30px;
+      left: 30px;
+      width: 50px;
+      height: 50px;
+      background: var(--bg-card);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 50%;
+      color: var(--neon-cyan);
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      z-index: 2050;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .floating-settings-btn:hover {
+      transform: rotate(45deg) scale(1.1);
+      box-shadow: var(--glow-cyan);
+    }
+    .settings-panel {
+      position: fixed;
+      bottom: 95px;
+      left: 30px;
+      background: rgba(20, 23, 34, 0.95);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 20px;
+      width: 290px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      z-index: 2050;
+      display: none;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .settings-panel h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+      color: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+    .settings-group {
+      margin-bottom: 18px;
+    }
+    .settings-group label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .settings-options {
+      display: flex;
+      gap: 8px;
+    }
+    .opt-btn {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 8px 4px;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .opt-btn:hover {
+      border-color: var(--neon-cyan);
+      color: #ffffff;
+    }
+    .opt-btn.active {
+      background: rgba(0, 212, 255, 0.12);
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      font-weight: 600;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.15);
+    }
+    .btn-close-settings {
+      width: 100%;
+      background: var(--border-color);
+      border: none;
+      color: #ffffff;
+      padding: 10px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 5px;
+      transition: background 0.2s;
+    }
+    .btn-close-settings:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Sepia Theme Overrides */
+    .theme-sepia {
+      background-color: #f4ecd8 !important;
+    }
+    .theme-sepia #reader-header {
+      background-color: rgba(244, 236, 216, 0.95) !important;
+      border-bottom-color: #dcd1b4 !important;
+    }
+    .theme-sepia #reader-title {
+      color: #5c4033 !important;
+    }
+    .theme-sepia .back-btn {
+      color: #8b5a2b !important;
+    }
+
+    /* Charcoal Theme Overrides */
+    .theme-charcoal {
+      background-color: #121216 !important;
+    }
+    .theme-charcoal #reader-header {
+      background-color: rgba(18, 18, 22, 0.95) !important;
+      border-bottom-color: #2a2a35 !important;
+    }
+
+    /* Back to Top Neon Button */
+    .back-to-top-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      background: var(--bg-card);
+      border: 1px solid var(--neon-green);
+      border-radius: 50%;
+      color: var(--neon-green);
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      z-index: 2050;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .back-to-top-btn.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    .back-to-top-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--glow-green);
+    }
+
     /* Cross-Reading Footer Styles */
     #reader-footer {
-      background-color: #111111;
-      padding: 30px 20px;
-      border-top: 2px solid #222222;
+      background-color: #0b0c10;
+      padding: 40px 20px;
+      border-top: 1px solid var(--border-color);
     }
     #reader-footer h3 {
-      color: #00ff00;
-      margin-bottom: 20px;
-      font-size: 1.2rem;
+      font-family: var(--font-display);
+      color: var(--neon-green);
+      margin-bottom: 25px;
+      font-size: 1.3rem;
       text-align: center;
+      letter-spacing: 0.5px;
     }
     .horizontal-scroll {
       display: flex;
       overflow-x: auto;
-      gap: 15px;
-      padding-bottom: 15px;
+      gap: 20px;
+      padding-bottom: 20px;
       max-width: 1000px;
       margin: 0 auto;
     }
@@ -313,11 +984,14 @@
       height: 8px;
     }
     .horizontal-scroll::-webkit-scrollbar-track {
-      background: #000;
+      background: rgba(0, 0, 0, 0.2);
     }
     .horizontal-scroll::-webkit-scrollbar-thumb {
-      background: #00ff00;
+      background: var(--border-color);
       border-radius: 4px;
+    }
+    .horizontal-scroll::-webkit-scrollbar-thumb:hover {
+      background: var(--neon-cyan);
     }
   ]]></b:skin>
 </head>
@@ -333,10 +1007,13 @@
 
   <!-- Splash Screen Loading -->
   <div id='splash-screen'>
-    <div class='neon-loading'>MonstaComic Loading...</div>
+    <div class='neon-loading'>MONSTACOMIC</div>
+    <div class='spinner-container'>
+      <div class='spinner-ring'></div>
+    </div>
   </div>
 
-  <!-- Sidebar Menu (Kategori Dinamis) -->
+  <!-- Sidebar Menu (Kategori Dinamis Glassmorphism) -->
   <div id='sidebar-menu'>
     <span class='close-sidebar' id='close-sidebar'>&#215;</span>
     <h2>Kategori Komik</h2>
@@ -353,22 +1030,95 @@
     <div id='homepage-view'>
       <!-- Hamburger Menu & Sticky Navigation Bar -->
       <header>
-        <div class='hamburger-menu' id='btn-hamburger'>&#9776;</div>
-        <div class='search-container'>
+        <div class='brand-container'>
+          <div class='hamburger-menu' id='btn-hamburger'>&#9776;</div>
+          <a class='logo' href='#'>MONSTA<span>COMIC</span></a>
+        </div>
+        <div class='search-wrapper'>
+          <span class='search-icon'>&#128269;</span>
           <input id='search-bar' placeholder='Cari judul komik...' type='text'/>
         </div>
       </header>
 
-      <!-- Homepage View Grid -->
+      <!-- Homepage View Container -->
       <main class='container'>
+        <!-- Horizontal Tabs Filter (Akan dirender dinamis via JS) -->
+        <div class='tabs-container' id='tabs-filter'>
+          <button class='tab-btn active' data-filter='all'>Semua</button>
+          <button class='tab-btn' data-filter='favorite'>Favorit Saya</button>
+        </div>
+
         <div id='comic-grid'>
           <!-- Kartu komik akan di-inject via JS -->
         </div>
       </main>
     </div>
 
+    <!-- MANGA DETAIL VIEW -->
+    <div id='detail-view' style='display: none;'>
+      <div class='detail-banner-container'>
+        <div class='detail-backdrop' id='detail-backdrop'></div>
+        <div class='detail-banner-overlay'></div>
+        <header class='detail-header'>
+          <div class='back-btn' id='btn-back-detail'>&#8592; Kembali</div>
+          <button class='fav-btn' id='btn-fav-detail'>&#9825; Favorit</button>
+        </header>
+        
+        <div class='detail-hero-content'>
+          <img class='detail-cover' id='detail-cover' src='' alt='Manga Cover'/>
+          <div class='detail-info'>
+            <span class='detail-type-badge' id='detail-type'>MANHWA</span>
+            <h1 class='detail-title' id='detail-title'>Title</h1>
+            <p class='detail-alt-title' id='detail-alt-title'>Alternative Title</p>
+            
+            <div class='detail-meta-grid'>
+              <div class='detail-meta-item'>
+                <span class='meta-label'>Rating</span>
+                <span class='meta-value text-gold' id='detail-rating'>&#9733; 4.8</span>
+              </div>
+              <div class='detail-meta-item'>
+                <span class='meta-label'>Author</span>
+                <span class='meta-value' id='detail-author'>Author Name</span>
+              </div>
+              <div class='detail-meta-item'>
+                <span class='meta-label'>Status</span>
+                <span class='meta-value text-green' id='detail-status'>Ongoing</span>
+              </div>
+              <div class='detail-meta-item'>
+                <span class='meta-label'>Tahun</span>
+                <span class='meta-value' id='detail-year'>2023</span>
+              </div>
+            </div>
+
+            <div class='detail-genres' id='detail-genres'>
+              <!-- Genre pills akan di-inject via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class='detail-body-container'>
+        <div class='detail-section'>
+          <h2>Sinopsis</h2>
+          <p class='detail-synopsis' id='detail-synopsis'>Synopsis text here...</p>
+        </div>
+        
+        <div class='detail-section action-section'>
+          <button class='btn-primary-neon' id='btn-start-reading'>
+            <span>MULAI MEMBACA</span>
+            <svg class='icon-play' viewBox='0 0 24 24'><path d='M8 5v14l11-7z' fill='currentColor'/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ADVANCED READER MODE VIEW -->
     <div id='reader-view'>
+      <!-- Scroll Progress Bar -->
+      <div id='scroll-progress-container'>
+        <div id='scroll-progress-bar'></div>
+      </div>
+
       <div id='reader-header'>
         <div class='back-btn' id='btn-back'>&#8592; Kembali</div>
         <div id='reader-title'>Judul Komik</div>
@@ -380,6 +1130,35 @@
         <h3>Rekomendasi Lainnya</h3>
         <div class='horizontal-scroll' id='recommendation-grid'></div>
       </div>
+
+      <!-- Floating Reader Settings -->
+      <div id='btn-toggle-settings' class='floating-settings-btn'>&#9881;</div>
+      <div id='reader-settings-panel' class='settings-panel'>
+        <h3>Pengaturan Reader</h3>
+        
+        <div class='settings-group'>
+          <label>Warna Latar</label>
+          <div class='settings-options'>
+            <button class='opt-btn active' data-bg='amoled' id='opt-bg-amoled'>Amoled</button>
+            <button class='opt-btn' data-bg='charcoal' id='opt-bg-charcoal'>Charcoal</button>
+            <button class='opt-btn' data-bg='sepia' id='opt-bg-sepia'>Sepia</button>
+          </div>
+        </div>
+
+        <div class='settings-group'>
+          <label>Lebar Gambar</label>
+          <div class='settings-options'>
+            <button class='opt-btn active' data-width='fit' id='opt-w-fit'>Fit (800px)</button>
+            <button class='opt-btn' data-width='medium' id='opt-w-medium'>Medium (600px)</button>
+            <button class='opt-btn' data-width='full' id='opt-w-full'>Penuh</button>
+          </div>
+        </div>
+        
+        <button class='btn-close-settings' id='btn-close-settings'>Tutup</button>
+      </div>
+
+      <!-- Floating Back to Top Button -->
+      <div id='btn-back-to-top' class='back-to-top-btn'>&#8593;</div>
     </div>
 
   </div>
@@ -390,13 +1169,79 @@
     const GH_USER = "Rikhiz";
     const GH_REPO = "monstaap";
 
-    // Data dummy untuk Homepage View
+    // Data komik cadangan (Fallback dummy data) jika GitHub API terlimit (HTTP 403)
     let comicData = [
-      { id: "manga_001", title: "A Dragonslayer’s Peerless Regression", cover_url: "https://via.placeholder.com/300x400/111111/00ff00?text=Dragonslayer" },
-      { id: "manga_002", title: "Solo Leveling", cover_url: "https://via.placeholder.com/300x400/111111/00ff00?text=Solo+Leveling" },
-      { id: "manga_003", title: "Omniscient Reader's Viewpoint", cover_url: "https://via.placeholder.com/300x400/111111/00ff00?text=ORV" },
-      { id: "manga_004", title: "The Beginning After The End", cover_url: "https://via.placeholder.com/300x400/111111/00ff00?text=TBATE" }
+      { 
+        id: "manga_001", 
+        title: "A Dragonslayer’s Peerless Regression", 
+        alternative_title: "The Peerless Dragonslayer's Return",
+        cover_url: "https://via.placeholder.com/300x400/111111/00ff88?text=Dragonslayer",
+        rating: 4.8,
+        author: "Yoo Sung",
+        status: "Ongoing",
+        release_year: 2023,
+        type: "Manhwa",
+        genres: ["Action", "Fantasy", "Adventure", "Regression"],
+        synopsis: "Setelah dikhianati dan dibunuh oleh rekan-rekannya, pembantai naga terhebat kembali ke masa lalu (regresi) untuk menulis ulang takdirnya, memperkuat dirinya sebelum terlambat, dan menyelamatkan umat manusia dari bencana kehancuran yang mendekat."
+      },
+      { 
+        id: "manga_002", 
+        title: "Solo Leveling", 
+        alternative_title: "Only I Level Up",
+        cover_url: "https://via.placeholder.com/300x400/111111/00ff88?text=Solo+Leveling",
+        rating: 4.9,
+        author: "Chugong",
+        status: "Completed",
+        release_year: 2018,
+        type: "Manhwa",
+        genres: ["Action", "Fantasy", "System", "Adventure"],
+        synopsis: "Di dunia di mana para hunter harus bertarung melawan monster mematikan untuk melindungi umat manusia, Sung Jinwoo, hunter terlemah di seluruh dunia, mendapati dirinya terjebak dalam dungeon ganda misterius. Setelah hampir mati, ia menerima sistem aneh yang memungkinkannya naik level tanpa batas."
+      },
+      { 
+        id: "manga_003", 
+        title: "Omniscient Reader's Viewpoint", 
+        alternative_title: "ORV",
+        cover_url: "https://via.placeholder.com/300x400/111111/00ff88?text=ORV",
+        rating: 4.7,
+        author: "Sing Shong",
+        status: "Ongoing",
+        release_year: 2020,
+        type: "Manhwa",
+        genres: ["Fantasy", "Action", "Survival", "Metafiction"],
+        synopsis: "Dokja adalah seorang karyawan kantor biasa yang satu-satunya hobi adalah membaca web novel favoritnya 'Tiga Cara untuk Bertahan Hidup di Dunia yang Hancur'. Namun, ketika novel tersebut tiba-tiba menjadi kenyataan di dunia nyata, dia adalah satu-satunya orang yang mengetahui bagaimana akhir dari dunia ini."
+      },
+      { 
+        id: "manga_004", 
+        title: "The Beginning After The End", 
+        alternative_title: "TBATE",
+        cover_url: "https://via.placeholder.com/300x400/111111/00ff88?text=TBATE",
+        rating: 4.6,
+        author: "TurtleMe",
+        status: "Ongoing",
+        release_year: 2018,
+        type: "Manhwa",
+        genres: ["Fantasy", "Isekai", "Magic", "Action"],
+        synopsis: "Raja Grey memiliki kekuatan, kekayaan, dan prestise yang tak tertandingi di dunia yang diatur oleh kemampuan bela diri. Namun, kesepian selalu membayangi mereka yang memiliki kekuasaan besar. Terlahir kembali ke dunia baru yang dipenuhi sihir dan monster, sang raja diberi kesempatan kedua untuk menjalani hidupnya dan melindungi orang-orang yang dicintainya."
+      }
     ];
+
+    // LocalStorage Bookmark System
+    let favorites = JSON.parse(localStorage.getItem('monsta_favs')) || [];
+
+    const saveFavorites = () => {
+      localStorage.setItem('monsta_favs', JSON.stringify(favorites));
+    };
+
+    const isFavorite = (id) => favorites.includes(id);
+
+    const toggleFavorite = (id) => {
+      if (isFavorite(id)) {
+        favorites = favorites.filter(favId => favId !== id);
+      } else {
+        favorites.push(id);
+      }
+      saveFavorites();
+    };
 
     document.addEventListener("DOMContentLoaded", () => {
       const splashScreen = document.getElementById('splash-screen');
@@ -404,9 +1249,14 @@
       const searchBar = document.getElementById('search-bar');
       
       const homepageView = document.getElementById('homepage-view');
+      const detailView = document.getElementById('detail-view');
       const readerView = document.getElementById('reader-view');
       const readerContent = document.getElementById('reader-content');
       const recommendationGrid = document.getElementById('recommendation-grid');
+      
+      // Active states for routing
+      let currentActiveComic = null;
+      let currentFilterTab = 'all';
 
       // Sidebar Elements
       const btnHamburger = document.getElementById('btn-hamburger');
@@ -414,6 +1264,9 @@
       const closeSidebar = document.getElementById('close-sidebar');
       const categoryList = document.getElementById('category-list');
       const repoStatus = document.getElementById('repo-status');
+
+      // Reader Width Config
+      let readerWidthClass = 'width-fit';
 
       // --- LOGIC SIDEBAR MENU ---
       btnHamburger.addEventListener('click', () => {
@@ -434,109 +1287,275 @@
           const card = document.createElement('div');
           card.className = 'card';
           card.innerHTML = `
-            <img class="card-cover" src="${comic.cover_url}" alt="Cover ${comic.title}" loading="lazy"/>
-            <h3 class="card-title">${comic.title}</h3>
-            <span class="read-badge">Baca Online</span>
+            <div class="card-cover-container">
+              <div class="card-badges">
+                <span class="badge-type">${comic.type}</span>
+                <span class="badge-rating">&#9733; ${comic.rating}</span>
+              </div>
+              <img class="card-cover" src="${comic.cover_url}" alt="Cover ${comic.title}" loading="lazy"/>
+            </div>
+            <div class="card-info">
+              <h3 class="card-title">${comic.title}</h3>
+              <div class="card-meta">
+                <span class="card-year">${comic.release_year}</span>
+                <span class="read-badge">Detail</span>
+              </div>
+            </div>
           `;
-          card.addEventListener('click', () => openReader(comic));
+          card.addEventListener('click', () => openDetail(comic));
           comicGrid.appendChild(card);
         });
       };
 
-      // --- CEK KONEKSI GITHUB & RENDER KATEGORI ---
-      const fetchRepoContents = async () => {
-        repoStatus.innerHTML = 'Mengecek repositori...';
+      // --- RENDER TABS FILTER DINAMIS ---
+      const renderTabs = (categories) => {
+        const tabsFilter = document.getElementById('tabs-filter');
+        tabsFilter.innerHTML = '<button class="tab-btn active" data-filter="all">Semua</button>';
+        
+        categories.forEach(cat => {
+          const btn = document.createElement('button');
+          btn.className = 'tab-btn';
+          btn.setAttribute('data-filter', cat);
+          btn.textContent = cat;
+          tabsFilter.appendChild(btn);
+        });
+
+        const favBtn = document.createElement('button');
+        favBtn.className = 'tab-btn';
+        favBtn.setAttribute('data-filter', 'favorite');
+        favBtn.textContent = 'Favorit Saya';
+        tabsFilter.appendChild(favBtn);
+
+        // Pasang kembali event listener untuk tab baru
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(button => {
+          button.addEventListener('click', (e) => {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            currentFilterTab = button.getAttribute('data-filter');
+            applyFilters();
+          });
+        });
+      };
+
+      const applyFilters = () => {
+        let filtered = comicData;
+        
+        // Tab Filter
+        if (currentFilterTab === 'favorite') {
+          filtered = filtered.filter(comic => isFavorite(comic.id));
+        } else if (currentFilterTab !== 'all') {
+          filtered = filtered.filter(comic => comic.type === currentFilterTab || comic.genres.includes(currentFilterTab));
+        }
+
+        // Search Filter
+        const keyword = searchBar.value.toLowerCase();
+        if (keyword) {
+          filtered = filtered.filter(comic => 
+            comic.title.toLowerCase().includes(keyword) || 
+            (comic.alternative_title && comic.alternative_title.toLowerCase().includes(keyword))
+          );
+        }
+
+        renderGrid(filtered);
+      };
+
+      searchBar.addEventListener('input', applyFilters);
+
+      // --- LOGIKA SCANNING DENGAN DUA TAHAPAN (TWO-STEP FETCH) ---
+      const scanGitHubRepository = async () => {
+        repoStatus.innerHTML = 'Memindai repositori (Langkah 1/2)...';
         repoStatus.className = '';
         
-        // Peringatan jika belum diganti
         if (GH_USER === "GANTI_USER_KAMU" || GH_REPO === "GANTI_REPO_KAMU") {
-          repoStatus.innerHTML = '&#10007; Status: Anda belum mengubah variabel GH_USER atau GH_REPO di kode.';
-          repoStatus.className = 'status-error';
-          categoryList.innerHTML = '<div style="color:#ff5555; font-size:0.9rem;">Variabel belum diset.</div>';
-          return;
+          throw new Error("Variabel GH_USER atau GH_REPO belum diset.");
         }
 
-        try {
-          const apiUrl = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/`;
-          const response = await fetch(apiUrl);
-          if (response.ok) {
-            const data = await response.json();
-            const directories = data.filter(item => item.type === 'dir');
-            
-            repoStatus.innerHTML = `&#10003; Terhubung ke GitHub:<br/><b>${GH_USER}/${GH_REPO}</b>`;
-            repoStatus.className = 'status-ok';
-            
-            categoryList.innerHTML = '';
-            if (directories.length > 0) {
-              directories.forEach(dir => {
-                const div = document.createElement('div');
-                div.className = 'category-item';
-                div.textContent = `📁 ${dir.name}`;
-                div.addEventListener('click', () => {
-                  alert('Membuka kategori: ' + dir.name);
-                  sidebarMenu.classList.remove('active');
-                });
-                categoryList.appendChild(div);
-              });
-            } else {
-              categoryList.innerHTML = '<div style="color:#aaa; font-size:0.9rem;">Tidak ada folder kategori di repositori ini.</div>';
+        const rootUrl = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/`;
+        const response = await fetch(rootUrl);
+        if (!response.ok) {
+          throw new Error(`GitHub API Error: ${response.status}`);
+        }
+
+        const rootContents = await response.json();
+        // Hanya ambil direktori/folder (Kategori)
+        const directories = rootContents.filter(item => item.type === 'dir' && item.name !== '.git' && item.name !== 'database');
+        
+        if (directories.length === 0) {
+          throw new Error("Tidak ada folder kategori di root repositori.");
+        }
+
+        repoStatus.innerHTML = 'Memindai kategori (Langkah 2/2)...';
+        
+        const scannedComics = [];
+        const categoryFolders = [];
+
+        // Lakukan scanning paralel untuk masing-masing folder kategori (Dua-Tahap paralel)
+        const folderPromises = directories.map(async (dir) => {
+          try {
+            const folderResponse = await fetch(dir.url);
+            if (!folderResponse.ok) {
+              console.warn(`Gagal memindai folder ${dir.name}: ${folderResponse.status}`);
+              return;
             }
-          } else if (response.status === 403) {
-            // Handle GitHub Rate Limit (60 req/hour for unauthenticated)
-            repoStatus.innerHTML = `&#9888; API Limit (HTTP 403):<br/>Terlalu banyak refresh. Kategori dinamis dijeda sementara.`;
-            repoStatus.className = 'status-error';
-            repoStatus.style.borderLeftColor = '#ffcc00';
-            repoStatus.style.color = '#ffcc00';
-            categoryList.innerHTML = `
-              <div class="category-item" onclick="alert('Kategori sementara')">📁 Action</div>
-              <div class="category-item" onclick="alert('Kategori sementara')">📁 Fantasy</div>
-              <div class="category-item" onclick="alert('Kategori sementara')">📁 Regression</div>
-              <div style="color:#888; font-size:0.8rem; margin-top:10px; font-style:italic;">(Ini kategori dummy sementara fitur live limit)</div>
-            `;
-          } else {
-            repoStatus.innerHTML = `&#10007; Gagal (HTTP ${response.status}):<br/>Repo tidak ditemukan. Pastikan repo bersifat Public.`;
-            repoStatus.className = 'status-error';
-            categoryList.innerHTML = '<div style="color:#ff5555; font-size:0.9rem;">Gagal memuat kategori.</div>';
+
+            const files = await folderResponse.json();
+            const cbzFiles = files.filter(file => file.type === 'file' && file.name.endsWith('.cbz'));
+            const imageFiles = files.filter(file => file.type === 'file' && file.name.match(/\.(png|jpe?g|webp)$/i));
+
+            cbzFiles.forEach((cbzFile, index) => {
+              const title = cbzFile.name.replace(/\.cbz$/i, '');
+              
+              // Tentukan cover jika ada file gambar dengan nama yang mirip di folder yang sama
+              let coverUrl = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/${dir.name}/${encodeURIComponent(title)}.jpg`;
+              const matchingImage = imageFiles.find(img => img.name.startsWith(title));
+              if (matchingImage) {
+                coverUrl = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/${dir.name}/${encodeURIComponent(matchingImage.name)}`;
+              }
+
+              // Buat metadata komik yang realistis
+              const mockRatings = [4.5, 4.6, 4.7, 4.8, 4.9];
+              const randomRating = mockRatings[Math.floor(Math.random() * mockRatings.length)];
+              const mockYears = [2021, 2022, 2023, 2024];
+              const randomYear = mockYears[Math.floor(Math.random() * mockYears.length)];
+
+              scannedComics.push({
+                id: `dynamic_${dir.name}_${index}`,
+                title: title,
+                filename: cbzFile.name,
+                cover_url: coverUrl,
+                rating: randomRating,
+                author: "Scanlation Group",
+                status: "Ongoing",
+                release_year: randomYear,
+                type: dir.name,
+                category: dir.name,
+                genres: [dir.name, "Action", "Adventure"],
+                synopsis: `Membaca komik ${title} online Bahasa Indonesia gratis di MonstaComic. Nikmati kelanjutan petualangan serunya yang diunggah langsung di kategori ${dir.name}.`,
+                download_path: `${dir.name}/${encodeURIComponent(cbzFile.name)}`
+              });
+            });
+
+            categoryFolders.push(dir.name);
+          } catch (err) {
+            console.error(`Error memproses subfolder ${dir.name}:`, err);
           }
-        } catch (error) {
-          console.warn("API GitHub Fetch Info:", error);
-          repoStatus.innerHTML = '&#10007; Gagal terhubung: Koneksi terputus atau batasan limit API GitHub.';
-          repoStatus.className = 'status-error';
-          categoryList.innerHTML = '<div style="color:#ff5555; font-size:0.9rem;">API terputus.</div>';
+        });
+
+        // Tunggu semua proses scanning subfolder selesai secara paralel
+        await Promise.all(folderPromises);
+
+        return { scannedComics, categoryFolders };
+      };
+
+      const filterByCategory = (category) => {
+        sidebarMenu.classList.remove('active');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(btn => {
+          if (btn.getAttribute('data-filter') === category) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+        currentFilterTab = category;
+        applyFilters();
+      };
+
+      // --- LOGIC DETAIL VIEW (SPA) ---
+      const openDetail = (comic) => {
+        currentActiveComic = comic;
+        homepageView.style.display = 'none';
+        readerView.style.display = 'none';
+        detailView.style.display = 'block';
+        window.scrollTo(0, 0);
+
+        // Inject Data detail ke DOM
+        document.getElementById('detail-backdrop').style.backgroundImage = `url(${comic.cover_url})`;
+        document.getElementById('detail-cover').src = comic.cover_url;
+        document.getElementById('detail-cover').onerror = function() {
+          this.onerror = null;
+          this.src = `https://via.placeholder.com/300x400/111111/00ff88?text=${encodeURIComponent(comic.title)}`;
+        };
+        document.getElementById('detail-title').textContent = comic.title;
+        document.getElementById('detail-alt-title').textContent = comic.alternative_title || "Monsta Dynamic Volume";
+        document.getElementById('detail-type').textContent = comic.type;
+        document.getElementById('detail-rating').innerHTML = `&#9733; ${comic.rating}`;
+        document.getElementById('detail-author').textContent = comic.author;
+        document.getElementById('detail-status').textContent = comic.status;
+        document.getElementById('detail-year').textContent = comic.release_year;
+        document.getElementById('detail-synopsis').textContent = comic.synopsis;
+
+        // Render genre pills
+        const genresContainer = document.getElementById('detail-genres');
+        genresContainer.innerHTML = '';
+        comic.genres.forEach(genre => {
+          const span = document.createElement('span');
+          span.className = 'genre-pill';
+          span.textContent = genre;
+          span.addEventListener('click', () => {
+            detailView.style.display = 'none';
+            homepageView.style.display = 'block';
+            filterByCategory(genre);
+          });
+          genresContainer.appendChild(span);
+        });
+
+        // Set status tombol favorit
+        updateFavoriteButtonState(comic.id);
+      };
+
+      const updateFavoriteButtonState = (id) => {
+        const btnFav = document.getElementById('btn-fav-detail');
+        if (isFavorite(id)) {
+          btnFav.classList.add('active');
+          btnFav.innerHTML = `&#9829; Favorit`;
+        } else {
+          btnFav.classList.remove('active');
+          btnFav.innerHTML = `&#9825; Favorit`;
         }
       };
 
-      const initApp = async () => {
-        fetchRepoContents();
-        setTimeout(() => {
-          renderGrid(comicData);
-          splashScreen.style.opacity = '0';
-          setTimeout(() => { splashScreen.style.visibility = 'hidden'; }, 500); 
-        }, 1500); 
-      };
+      document.getElementById('btn-fav-detail').addEventListener('click', () => {
+        if (currentActiveComic) {
+          toggleFavorite(currentActiveComic.id);
+          updateFavoriteButtonState(currentActiveComic.id);
+          applyFilters(); // refresh list homepage
+        }
+      });
 
-      searchBar.addEventListener('input', (e) => {
-        const keyword = e.target.value.toLowerCase();
-        const filteredComics = comicData.filter(comic => 
-          comic.title.toLowerCase().includes(keyword)
-        );
-        renderGrid(filteredComics);
+      document.getElementById('btn-back-detail').addEventListener('click', () => {
+        detailView.style.display = 'none';
+        homepageView.style.display = 'block';
+        currentActiveComic = null;
+      });
+
+      document.getElementById('btn-start-reading').addEventListener('click', () => {
+        if (currentActiveComic) {
+          openReader(currentActiveComic);
+        }
       });
 
       // --- LOGIC READER MODE ---
       const openReader = (comic) => {
+        detailView.style.display = 'none';
         homepageView.style.display = 'none';
         readerView.style.display = 'block';
         document.getElementById('reader-title').textContent = comic.title;
         window.scrollTo(0, 0); 
         renderRecommendations(comic.id);
-        loadCBZFile(comic.title);
+        loadCBZFile(comic);
       };
 
       document.getElementById('btn-back').addEventListener('click', () => {
         readerView.style.display = 'none';
-        homepageView.style.display = 'block';
+        if (currentActiveComic) {
+          detailView.style.display = 'block';
+        } else {
+          homepageView.style.display = 'block';
+        }
         readerContent.innerHTML = ''; 
+        document.getElementById('scroll-progress-bar').style.width = '0%';
       });
 
       const renderRecommendations = (excludeId) => {
@@ -550,26 +1569,40 @@
           card.style.minWidth = '140px';
           card.style.paddingBottom = '10px';
           card.innerHTML = `
-            <img class="card-cover" src="${comic.cover_url}" alt="Cover" style="height:190px;"/>
-            <h3 class="card-title" style="font-size:0.85rem; margin-top:8px;">${comic.title}</h3>
+            <img class="card-cover" src="${comic.cover_url}" alt="Cover" style="height:180px;" onerror="this.src='https://via.placeholder.com/140x180/111111/00ff88?text=Monsta'"/>
+            <h3 class="card-title" style="font-size:0.8rem; margin:10px 8px 0; height:32px;">${comic.title}</h3>
           `;
-          card.addEventListener('click', () => openReader(comic));
+          card.addEventListener('click', () => {
+            currentActiveComic = comic;
+            openReader(comic);
+          });
           recommendationGrid.appendChild(card);
         });
       };
 
-      const loadCBZFile = async (title) => {
+      // JSZip Unzipper & dynamic loading dengan penanganan error interaktif
+      const loadCBZFile = async (comic) => {
         readerContent.innerHTML = `
-          <div style="padding: 100px 20px; text-align: center; width: 100%;">
+          <div style="padding: 120px 20px; text-align: center; width: 100%;">
             <div class="neon-loading">Mengekstrak Chapter...</div>
-            <p style="color: #00ff00; margin-top: 15px; opacity: 0.7;">Sedang mengunduh file .cbz dari GitHub</p>
+            <div class="spinner-container" style="margin: 0 auto 20px;">
+              <div class="spinner-ring"></div>
+            </div>
+            <p style="color: var(--neon-cyan); margin-top: 15px; opacity: 0.8; font-family: var(--font-display);">Mengunduh berkas .cbz dari repositori GitHub...</p>
           </div>
         `;
 
         try {
-          const fileUrl = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/assets/${encodeURIComponent(title)}.cbz`;
+          let fileUrl;
+          if (comic.download_path) {
+            fileUrl = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/${comic.download_path}`;
+          } else {
+            // Fallback path default ke assets jika menggunakan dummy data lokal
+            fileUrl = `https://raw.githubusercontent.com/${GH_USER}/${GH_REPO}/main/assets/${encodeURIComponent(comic.title)}.cbz`;
+          }
+
           const response = await fetch(fileUrl);
-          if (!response.ok) throw new Error("HTTP-Error: " + response.status);
+          if (!response.ok) throw new Error("Gagal mengunduh berkas. Kode Status HTTP: " + response.status);
 
           const blob = await response.blob();
           const zip = new JSZip();
@@ -589,30 +1622,38 @@
               const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
               
               img.src = `data:${mimeType};base64,${base64Data}`;
-              img.className = 'reader-page';
+              img.className = `reader-page ${readerWidthClass}`;
               img.loading = 'lazy'; 
 
               img.onerror = function() {
                 this.onerror = null; 
-                this.src = "https://via.placeholder.com/800x1000/111111/ff0000?text=Gambar+Rusak";
-                this.style.border = "2px dashed #ff0000";
+                this.src = "https://via.placeholder.com/800x1000/111118/ff0055?text=Gambar+Gagal+Dimuat";
+                this.style.border = "2px dashed #ff0055";
               };
               attachZoomAndPan(img);
               readerContent.appendChild(img);
             }
           }
-          if (imageCount === 0) throw new Error("File CBZ kosong.");
+          if (imageCount === 0) throw new Error("File CBZ kosong atau tidak memiliki gambar.");
         } catch (error) {
+          console.error("Gagal memuat CBZ:", error);
           readerContent.innerHTML = `
-            <div style="width: 100%; max-width: 800px; margin: 40px auto; padding: 40px 20px; text-align: center; border: 2px dashed #00ff00; border-radius: 15px; color: #00ff00; background-color: #1a1a1a;">
-              <h2 style="margin-bottom: 10px; text-transform: uppercase;">Ups! Gagal Memuat Chapter</h2>
-              <p style="margin-bottom: 25px; color: #cccccc;">Sistem gagal mendownload atau mengekstrak file <b>.cbz</b>.</p>
-              <img src="https://via.placeholder.com/600x400/000000/00ff00?text=404+Chapter+Not+Found" style="width: 100%; max-width: 400px; border-radius: 10px;"/>
+            <div style="width: 100%; max-width: 800px; margin: 40px auto; padding: 40px 20px; text-align: center; border: 1px dashed var(--neon-cyan); border-radius: 16px; color: var(--neon-cyan); background-color: var(--bg-card); box-shadow: var(--glow-cyan);">
+              <h2 style="margin-bottom: 15px; font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.5px;">Gagal Memuat Halaman</h2>
+              <p style="margin-bottom: 25px; color: var(--text-secondary);">Sistem gagal mengunduh atau mengekstrak berkas <b>.cbz</b>.<br/>Detail kesalahan: <code style="color: #ff557f; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px;">${error.message || error}</code></p>
+              <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 25px;">
+                <button class="btn-primary-neon" id="btn-retry-cbz" style="width: auto; padding: 10px 25px; font-size: 0.95rem;">Coba Lagi</button>
+              </div>
+              <img src="https://via.placeholder.com/600x400/101116/ff0055?text=Download+Error" style="width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid var(--border-color); opacity: 0.7;"/>
             </div>
           `;
+          document.getElementById('btn-retry-cbz').addEventListener('click', () => {
+            loadCBZFile(comic);
+          });
         }
       };
 
+      // Zoom & Pan touch/mouse event listener (No-Regression)
       const attachZoomAndPan = (img) => {
         let isZoomed = false;
         let startX, startY, currentX = 0, currentY = 0;
@@ -685,6 +1726,165 @@
           img.style.transform = `scale(2) translate(${currentX/2}px, ${currentY/2}px)`;
         }, {passive: false});
         img.addEventListener('touchend', () => { isDragging = false; });
+      };
+
+      // --- LOGIC READER SETTINGS PANEL ---
+      const btnToggleSettings = document.getElementById('btn-toggle-settings');
+      const readerSettingsPanel = document.getElementById('reader-settings-panel');
+      const btnCloseSettings = document.getElementById('btn-close-settings');
+
+      btnToggleSettings.addEventListener('click', () => {
+        const isVisible = readerSettingsPanel.style.display === 'block';
+        readerSettingsPanel.style.display = isVisible ? 'none' : 'block';
+      });
+
+      btnCloseSettings.addEventListener('click', () => {
+        readerSettingsPanel.style.display = 'none';
+      });
+
+      const optBgAmoled = document.getElementById('opt-bg-amoled');
+      const optBgCharcoal = document.getElementById('opt-bg-charcoal');
+      const optBgSepia = document.getElementById('opt-bg-sepia');
+      const bgButtons = [optBgAmoled, optBgCharcoal, optBgSepia];
+
+      const setReaderBackground = (mode) => {
+        readerView.className = ''; 
+        if (mode === 'sepia') {
+          readerView.classList.add('theme-sepia');
+        } else if (mode === 'charcoal') {
+          readerView.classList.add('theme-charcoal');
+        }
+        
+        bgButtons.forEach(btn => {
+          if (btn.getAttribute('data-bg') === mode) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      };
+
+      optBgAmoled.addEventListener('click', () => setReaderBackground('amoled'));
+      optBgCharcoal.addEventListener('click', () => setReaderBackground('charcoal'));
+      optBgSepia.addEventListener('click', () => setReaderBackground('sepia'));
+
+      const optWFit = document.getElementById('opt-w-fit');
+      const optWMedium = document.getElementById('opt-w-medium');
+      const optWFull = document.getElementById('opt-w-full');
+      const widthButtons = [optWFit, optWMedium, optWFull];
+
+      const setReaderWidth = (widthMode) => {
+        readerWidthClass = widthMode === 'full' ? 'width-full' : widthMode === 'medium' ? 'width-medium' : 'width-fit';
+        
+        const pages = document.querySelectorAll('.reader-page');
+        pages.forEach(page => {
+          page.className = 'reader-page'; 
+          page.classList.add(readerWidthClass);
+        });
+
+        widthButtons.forEach(btn => {
+          if (btn.getAttribute('data-width') === widthMode) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      };
+
+      optWFit.addEventListener('click', () => setReaderWidth('fit'));
+      optWMedium.addEventListener('click', () => setReaderWidth('medium'));
+      optWFull.addEventListener('click', () => setReaderWidth('full'));
+
+      // --- SCROLL PROGRESS & BACK TO TOP BUTTON LOGIC ---
+      const backToTopBtn = document.getElementById('btn-back-to-top');
+
+      window.addEventListener('scroll', () => {
+        if (readerView.style.display === 'block') {
+          const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+          const progress = totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0;
+          document.getElementById('scroll-progress-bar').style.width = `${progress}%`;
+
+          if (window.scrollY > 400) {
+            backToTopBtn.classList.add('visible');
+          } else {
+            backToTopBtn.classList.remove('visible');
+          }
+        }
+      });
+
+      backToTopBtn.addEventListener('click', () => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      });
+
+      // --- INITIALIZE APPLICATION & LIFE-CYCLE MANAGEMENT ---
+      const initApp = async () => {
+        try {
+          // Inisialisasi proses pencarian bertingkat (Two-Step Fetch)
+          const result = await scanGitHubRepository();
+          
+          if (result && result.scannedComics.length > 0) {
+            // Jika berhasil menemukan file CBZ
+            comicData = result.scannedComics;
+            
+            repoStatus.innerHTML = `&#10003; Terhubung ke GitHub:<br/><b>${GH_USER}/${GH_REPO}</b><br/>Berhasil memuat ${comicData.length} komik.`;
+            repoStatus.className = 'status-ok';
+
+            // Masukkan list kategori ke menu sidebar
+            categoryList.innerHTML = '';
+            result.categoryFolders.forEach(cat => {
+              const div = document.createElement('div');
+              div.className = 'category-item';
+              div.innerHTML = `📁 ${cat}`;
+              div.addEventListener('click', () => filterByCategory(cat));
+              categoryList.appendChild(div);
+            });
+
+            // Bangun tab filter kategori secara dinamis berdasarkan folder
+            renderTabs(result.categoryFolders);
+          } else {
+            throw new Error("Tidak menemukan berkas komik berekstensi .cbz di repositori.");
+          }
+        } catch (error) {
+          console.warn("Dua-Langkah Fetch gagal, memuat backup lokal:", error);
+          
+          // Logik error handling untuk API limit 403 atau repository not found
+          if (error.message.includes("403")) {
+            repoStatus.innerHTML = `&#9888; API Limit (HTTP 403):<br/>Menggunakan data lokal.`;
+          } else {
+            repoStatus.innerHTML = `&#10007; Status Koneksi:<br/>${error.message || 'Repo Gagal Memuat'}`;
+          }
+          repoStatus.className = 'status-error';
+
+          // Inject kategori lokal cadangan ke sidebar
+          categoryList.innerHTML = `
+            <div class="category-item" id="cat-action">📁 Action</div>
+            <div class="category-item" id="cat-fantasy">📁 Fantasy</div>
+            <div class="category-item" id="cat-adventure">📁 Adventure</div>
+            <div class="category-item" id="cat-regression">📁 Regression</div>
+          `;
+          
+          document.getElementById('cat-action').addEventListener('click', () => filterByCategory('Action'));
+          document.getElementById('cat-fantasy').addEventListener('click', () => filterByCategory('Fantasy'));
+          document.getElementById('cat-adventure').addEventListener('click', () => filterByCategory('Adventure'));
+          document.getElementById('cat-regression').addEventListener('click', () => filterByCategory('Regression'));
+
+          // Bangun kembali tab filter statis cadangan
+          renderTabs(['Manhwa', 'Manga']);
+        } finally {
+          // Jalankan render grid akhir pada Homepage View
+          applyFilters();
+          
+          // Matikan Splash Screen hanya setelah render selesai sempurna
+          setTimeout(() => {
+            splashScreen.style.opacity = '0';
+            setTimeout(() => { 
+              splashScreen.style.display = 'none'; 
+            }, 600); 
+          }, 800);
+        }
       };
 
       initApp();
