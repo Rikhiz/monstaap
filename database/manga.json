@@ -1,39 +1,113 @@
-{
-  "manga_id": "manga_001",
-  "title": "A Dragonslayer’s Peerless Regression",
-  "alternative_title": "The Peerless Dragonslayer's Return",
-  "status": "Ongoing",
-  "author": "Yoo Sung",
-  "artist": "Kuro",
-  "genres": [
-    "Action",
-    "Fantasy",
-    "Adventure",
-    "Regression"
-  ],
-  "type": "Manhwa",
-  "release_year": 2023,
-  "rating": 4.8,
-  "synopsis": "After being betrayed and killed, the greatest dragonslayer regressions to the past to rewrite his destiny and save humanity from the approaching doom.",
-  "cover_url": "https://example.com/covers/dragonslayer-regression.jpg",
-  "chapters": [
-    {
-      "chapter_number": 1,
-      "chapter_title": "The End and The Beginning",
-      "image_links": [
-        "https://example.com/raw/dragonslayer/ch1/page1.jpg",
-        "https://example.com/raw/dragonslayer/ch1/page2.jpg",
-        "https://example.com/raw/dragonslayer/ch1/page3.jpg"
-      ]
-    },
-    {
-      "chapter_number": 2,
-      "chapter_title": "A Second Chance",
-      "image_links": [
-        "https://example.com/raw/dragonslayer/ch2/page1.jpg",
-        "https://example.com/raw/dragonslayer/ch2/page2.jpg",
-        "https://example.com/raw/dragonslayer/ch2/page3.jpg"
-      ]
-    }
-  ]
-}
+[
+  {
+    "manga_id": "manga_001",
+    "title": "A Dragonslayer’s Peerless Regression",
+    "alternative_title": "The Peerless Dragonslayer's Return",
+    "status": "Ongoing",
+    "author": "Yoo Sung",
+    "artist": "Kuro",
+    "genres": [
+      "Action",
+      "Fantasy",
+      "Adventure",
+      "Regression"
+    ],
+    "type": "Manhwa",
+    "release_year": 2023,
+    "rating": 4.8,
+    "synopsis": "After being betrayed and killed, the greatest dragonslayer regressions to the past to rewrite his destiny and save humanity from the approaching doom.",
+    "cover_url": "https://example.com/covers/dragonslayer-regression.jpg",
+    "chapters": [
+      {
+        "chapter_number": 1,
+        "chapter_title": "The End and The Beginning",
+        "image_links": [
+          "https://example.com/raw/dragonslayer/ch1/page1.jpg",
+          "https://example.com/raw/dragonslayer/ch1/page2.jpg",
+          "https://example.com/raw/dragonslayer/ch1/page3.jpg"
+        ]
+      },
+      {
+        "chapter_number": 2,
+        "chapter_title": "A Second Chance",
+        "image_links": [
+          "https://example.com/raw/dragonslayer/ch2/page1.jpg",
+          "https://example.com/raw/dragonslayer/ch2/page2.jpg",
+          "https://example.com/raw/dragonslayer/ch2/page3.jpg"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "manga_002_level_999_go",
+    "title": "Level 999 Goblin",
+    "alternative_title": "",
+    "cover_url": "https://via.placeholder.com/300x400/111111/00ff88?text=Level%20999%20Gobli",
+    "rating": 0,
+    "author": "Unknown",
+    "status": "Ongoing",
+    "release_year": 2026,
+    "type": "Manga",
+    "genres": [
+      "Action"
+    ],
+    "synopsis": "Komik dari folder Action. Edit detail di database/manga.json untuk melengkapi informasi.",
+    "source_folder": "Action",
+    "cbz_filename": "Level 999 Goblin",
+    "is_new": true
+  },
+  {
+    "id": "manga_003_children_of_",
+    "title": "Children of the Rune",
+    "alternative_title": "",
+    "cover_url": "https://via.placeholder.com/300x400/111111/00ff88?text=Children%20of%20the",
+    "rating": 0,
+    "author": "Unknown",
+    "status": "Ongoing",
+    "release_year": 2026,
+    "type": "Manga",
+    "genres": [
+      "Drama"
+    ],
+    "synopsis": "Komik dari folder Drama. Edit detail di database/manga.json untuk melengkapi informasi.",
+    "source_folder": "Drama",
+    "cbz_filename": "Children of the Rune",
+    "is_new": true
+  },
+  {
+    "id": "manga_004_i_am_the_fat",
+    "title": "I Am the Fated Villain",
+    "alternative_title": "",
+    "cover_url": "https://via.placeholder.com/300x400/111111/00ff88?text=I%20Am%20the%20Fated%20",
+    "rating": 0,
+    "author": "Unknown",
+    "status": "Ongoing",
+    "release_year": 2026,
+    "type": "Manga",
+    "genres": [
+      "Fantasy"
+    ],
+    "synopsis": "Komik dari folder Fantasy. Edit detail di database/manga.json untuk melengkapi informasi.",
+    "source_folder": "Fantasy",
+    "cbz_filename": "I Am the Fated Villain",
+    "is_new": true
+  },
+  {
+    "id": "manga_005_only_i_have_",
+    "title": "Only I Have an EX-Grade Summon",
+    "alternative_title": "",
+    "cover_url": "https://via.placeholder.com/300x400/111111/00ff88?text=Only%20I%20Have%20an%20",
+    "rating": 0,
+    "author": "Unknown",
+    "status": "Ongoing",
+    "release_year": 2026,
+    "type": "Manga",
+    "genres": [
+      "Yuri"
+    ],
+    "synopsis": "Komik dari folder Yuri. Edit detail di database/manga.json untuk melengkapi informasi.",
+    "source_folder": "Yuri",
+    "cbz_filename": "Only I Have an EX-Grade Summon",
+    "is_new": true
+  }
+]
